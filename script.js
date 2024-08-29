@@ -19,7 +19,7 @@ fetch('./groups.json')
             startMatch(data[key], key)
           
           });
-          console.log(teamGroups);
+        //   console.log(teamGroups);
           return data;
     })
     .then(() => {
@@ -27,7 +27,10 @@ fetch('./groups.json')
             groupRanking(teamGroups[key], key)
           
           });
+          console.log('pre dodele mesta:')
           console.log(groupRanks)
+          sortHats()
+          console.log(hats)
     })
     .catch(error => {
         console.error('Došlo je do greške:', error);
@@ -134,13 +137,13 @@ function simulateMatch(probabilityTeam1, name1, name2) {
     const finalTeam1Score = Math.round(team1Score + (Math.random() - 0.5) * 2 * (stdDeviation * probabilityTeam1));
     const finalTeam2Score = Math.round(team2Score + (Math.random() - 0.5) * 2 * (stdDeviation * (1 - probabilityTeam1)))
 
-    // Računanje razlike u koševima
+    // racunanje razlike u kosevima
     const scoreDifference = finalTeam1Score - finalTeam2Score;
 
-    // Izlaz rezultata
+    // izlaz rezultata
     console.log(`       ${name1} - ${name2} (${finalTeam1Score}:${finalTeam2Score})`)
 
-    // Vraća rezultate kao objekat
+    // vraca rezultate kao objekat
     return {
         team1Score: finalTeam1Score,
         team2Score: finalTeam2Score,
@@ -173,6 +176,65 @@ function groupRanking(group) {
 
     let gubitnik = groupCopy.pop()
     console.log(`Ispada: ${gubitnik.Name} sa ${gubitnik.Points} poena`)
-    groupRanks.push(groupCopy); // Vrati rangiranu kopiju grupe
+    groupRanks.push(groupCopy); 
 }
 
+let hats = []
+ function sortHats(){
+    //primarno po broju bodova
+    //postiguti kosevi (ako isti bodovi)
+    //kos razlika (ako su 2 kriterfijuma iznad ista)
+    let place = 1
+    //ubacujemo prvih 9 timova u sesire
+    for (let i=0;i<groupRanks.length;i++){
+        for (let j=0;j<groupRanks.length;j++){
+            hats.push(groupRanks[j][i])
+        }
+    }
+
+    //sortiramo ih po zadatim kriterijumima
+    hats.sort((team1, team2) => {
+        if (team2.Points !== team1.Points) {
+            return team2.Points - team1.Points; // sortiraj po bodovima
+            // ako su bodovi jednaki, proveri postignute koseve
+        } else {
+            if (team1.GoalsScored !== team2.GoalsScored) {
+                if (team1.GoalsScored > team2.GoalsScored) {
+                    return -1; // team 1 je imao vise koseva
+                } else if (team2.GoalsScored > team1.GoalsScored) {
+                    return 1; // team 2 je imao vise
+                }
+                //ako su isti postignuti kosevi, proveri kos razliku
+                //TODO: popraviti bug, nekad radi nekad ne
+            } else {
+                if (team1.ScoreDifference > team2.ScoreDiference) {
+                    return -1; 
+                } else if (team2.ScoreDiference > team1.ScoreDiference) {
+                    return 1; 
+                }
+            }
+        }
+    })
+
+    //konacno sortiranje u odgovarajuce sesire
+    let sortedHats = {
+        "D": [],
+        "E": [],
+        "F": [],
+        "G": []
+    }
+
+    let num = 0
+    let keys = Object.keys(sortedHats)
+    
+    hats.pop()
+    while(hats.length > 0){
+            if (sortedHats[keys[num]].length < 2) {
+                sortedHats[keys[num]].push(hats[0])
+                hats.shift()
+            }
+            else {num++}
+    }
+    hats = sortedHats
+
+ }
