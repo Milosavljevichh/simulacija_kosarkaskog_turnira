@@ -26,11 +26,11 @@ fetch('./groups.json')
         Object.keys(teamGroups).forEach(function(key) {
             groupRanking(teamGroups[key], key)
           
-          });
-          console.log('pre dodele mesta:')
-          console.log(groupRanks)
+          });   
           sortHats()
           console.log(hats)
+          formQuarterfinals()
+          console.log(eliminationPhaseTeams)
     })
     .catch(error => {
         console.error('Došlo je do greške:', error);
@@ -51,7 +51,7 @@ function createTeamGroups(group, groupKey) {
             "Points": 0,
             "GoalsScored": 0,
             "OpponentPoints": 0,
-            "ScoreDiference": 0,
+            "scoreDifference": 0,
             "Matches": {}
         }
         groupObj[groupKey].push(team)
@@ -92,13 +92,13 @@ function calculateWinProbability(team1FIBA, team2FIBA, team1Index, team2Index, g
     if (matchResult.team1Score > matchResult.team2Score) {
         updateTeamStats(groupKey, team1Index, team2Index, name1, name2, matchResult)
         //ovo drzimo van updateTeamStats da bi smo izbegli bugove
-        teamGroups[groupKey][team1Index].ScoreDiference += matchResult.scoreDifference;
-        teamGroups[groupKey][team2Index].ScoreDiference -= matchResult.scoreDifference;
+        teamGroups[groupKey][team1Index].scoreDifference += matchResult.scoreDifference;
+        teamGroups[groupKey][team2Index].scoreDifference -= matchResult.scoreDifference;
         console.log(`       POBEDNIK: ${name1}`)
     } else {
         updateTeamStats(groupKey, team2Index, team1Index, name2, name1, matchResult)
-        teamGroups[groupKey][team2Index].ScoreDiference += matchResult.scoreDifference;
-        teamGroups[groupKey][team1Index].ScoreDiference -= matchResult.scoreDifference;
+        teamGroups[groupKey][team2Index].scoreDifference += matchResult.scoreDifference;
+        teamGroups[groupKey][team1Index].scoreDifference -= matchResult.scoreDifference;
         console.log(`       POBEDNIK: ${name2}`)
     }
     console.log('-----------------------------------------');
@@ -169,7 +169,7 @@ function groupRanking(group) {
                 return 1; // Team 2 je pobedio Team 1
             } else {
                 // ako je medjusobni susret neresen, kriterijum je kos razlika
-                return team2.ScoreDifference - team1.ScoreDifference;
+                return team2.scoreDifference - team1.scoreDifference;
             }
         }
     });
@@ -184,7 +184,7 @@ let hats = []
     //primarno po broju bodova
     //postiguti kosevi (ako isti bodovi)
     //kos razlika (ako su 2 kriterfijuma iznad ista)
-    let place = 1
+    
     //ubacujemo prvih 9 timova u sesire
     for (let i=0;i<groupRanks.length;i++){
         for (let j=0;j<groupRanks.length;j++){
@@ -198,18 +198,17 @@ let hats = []
             return team2.Points - team1.Points; // sortiraj po bodovima
             // ako su bodovi jednaki, proveri postignute koseve
         } else {
-            if (team1.GoalsScored !== team2.GoalsScored) {
-                if (team1.GoalsScored > team2.GoalsScored) {
+            if (team1.scoreDifference !== team2.scoreDifference) {
+                if (team1.scoreDifference > team2.scoreDifference) {
                     return -1; // team 1 je imao vise koseva
-                } else if (team2.GoalsScored > team1.GoalsScored) {
+                } else if (team2.scoreDifference > team1.scoreDifference) {
                     return 1; // team 2 je imao vise
                 }
                 //ako su isti postignuti kosevi, proveri kos razliku
-                //TODO: popraviti bug, nekad radi nekad ne
             } else {
-                if (team1.ScoreDifference > team2.ScoreDiference) {
+                if (team1.GoalsScored > team2.GoalsScored) {
                     return -1; 
-                } else if (team2.ScoreDiference > team1.ScoreDiference) {
+                } else if (team2.GoalsScored > team1.GoalsScored) {
                     return 1; 
                 }
             }
@@ -237,4 +236,32 @@ let hats = []
     }
     hats = sortedHats
 
+ }
+
+ let eliminationPhaseTeams = []
+
+ function formQuarterfinals(){
+    //nasumicno ukrstanje
+    //timovi iz D se ukrstaju s G
+    //E se ukrsta s F
+    //ako su igrali u grupnoj fazi, ne smeju da se sretnu
+    for (let i=0;i<4;i++){
+        //biramo random prvi ili drugi team
+        if (i < 2) {
+            getQuarterfinalsGroup("D", "G")
+        } else {
+            getQuarterfinalsGroup("E", "F")
+        }
+    }
+}
+
+function getQuarterfinalsGroup(hat1, hat2) {
+     let group = {}
+     let num1 = Math.floor(Math.random() * hats[hat1].length);
+     let num2 = Math.floor(Math.random() * hats[hat2].length);
+     group["Team1"] = hats[hat1][num1]
+     hats[hat1].splice(num1, 1)
+     group["Team2"] = hats[hat2][num2]
+     hats[hat2].splice(num2, 1)
+     eliminationPhaseTeams.push(group)
  }
