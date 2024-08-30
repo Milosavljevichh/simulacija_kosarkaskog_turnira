@@ -256,12 +256,30 @@ let hats = []
 }
 
 function getQuarterfinalsGroup(hat1, hat2) {
-     let group = {}
-     let num1 = Math.floor(Math.random() * hats[hat1].length);
-     let num2 = Math.floor(Math.random() * hats[hat2].length);
-     group["Team1"] = hats[hat1][num1]
-     hats[hat1].splice(num1, 1)
-     group["Team2"] = hats[hat2][num2]
-     hats[hat2].splice(num2, 1)
-     eliminationPhaseTeams.push(group)
+     let alreadyPlayed, index1, index2, formedGroup
+
+     //nasumicno biramo 2 tima, ako su igrali jedan protiv drugog, biramo ih opet, ako nisu onda ih uklanjamo iz sesira
+     do {
+         let group = {}
+         let num1 = Math.floor(Math.random() * hats[hat1].length);
+         let num2 = Math.floor(Math.random() * hats[hat2].length);
+    
+         group["Team1"] = hats[hat1][num1]
+         group["Team2"] = hats[hat2][num2]
+         
+         alreadyPlayed = haveAlreadyPlayed(group.Team1, group.Team2)
+         index1 = num1
+         index2 = num2
+         formedGroup = group
+     } while (alreadyPlayed)
+
+     hats[hat1].splice(index1, 1)
+     hats[hat2].splice(index2, 1)
+
+     eliminationPhaseTeams.push(formedGroup)
+ }
+
+ function haveAlreadyPlayed(team1, team2) {
+     let team1History = Object.keys(team1.Matches)
+     return team1History.includes(`Against_${team2.Name}`)
  }
