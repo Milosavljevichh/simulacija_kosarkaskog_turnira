@@ -35,7 +35,7 @@
 //         sortHats();
 //         console.log(hats);
 //         formQuarterfinals();
-//         console.log(eliminationPhaseTeams);
+//         console.log(quarterFinalsTeams);
 //     })
 //     .catch(error => {
 //         console.error('Došlo je do greške:', error);
@@ -69,9 +69,8 @@ fetch('./groups.json')
           
           });   
           sortHats()
-          console.log(hats)
           formQuarterfinals()
-          console.log(eliminationPhaseTeams)
+          console.log(quarterFinalsTeams)
     })
     .catch(error => {
         console.error('Došlo je do greške:', error);
@@ -216,7 +215,7 @@ function groupRanking(group) {
     });
 
     let gubitnik = groupCopy.pop()
-    console.log(`Ispada: ${gubitnik.Name} sa ${gubitnik.Points} poena`)
+    // console.log(`Ispada: ${gubitnik.Name} sa ${gubitnik.Points} poena`)
     groupRanks.push(groupCopy); 
 }
 
@@ -255,7 +254,6 @@ let hats = []
             }
         }
     })
-
     //konacno sortiranje u odgovarajuce sesire
     let sortedHats = {
         "D": [],
@@ -271,6 +269,7 @@ let hats = []
     while(hats.length > 0){
             if (sortedHats[keys[num]].length < 2) {
                 sortedHats[keys[num]].push(hats[0])
+                hats[0].In_hat = keys[num]
                 hats.shift()
             }
             else {num++}
@@ -279,7 +278,7 @@ let hats = []
 
  }
 
- let eliminationPhaseTeams = []
+ let quarterFinalsTeams = []
 
  function formQuarterfinals(){
     //nasumicno ukrstanje
@@ -312,15 +311,26 @@ function getQuarterfinalsGroup(hat1, hat2) {
          index1 = num1
          index2 = num2
          formedGroup = group
-     } while (alreadyPlayed)
+     } while (alreadyPlayed && hats[hat1].length == 2) // dodajemo && jer mozemo uci u infinite loop ako su ostali samo timovi koji su igrali jedan protiv drugog
 
      hats[hat1].splice(index1, 1)
      hats[hat2].splice(index2, 1)
 
-     eliminationPhaseTeams.push(formedGroup)
+     quarterFinalsTeams.push(formedGroup)
  }
 
  function haveAlreadyPlayed(team1, team2) {
      let team1History = Object.keys(team1.Matches)
      return team1History.includes(`Against_${team2.Name}`)
+ }
+
+ function playQuarterfinals() {
+    
+ }
+
+ function formSemifinals(){
+    //grupa iz E sesira igra sa D sesirom
+    //F igra sa G
+    //ako npr. nema preostalih timova iz G sesira, onda igraju s kim god da je ostao
+
  }
