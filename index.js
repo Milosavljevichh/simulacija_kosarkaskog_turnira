@@ -71,6 +71,8 @@ fetch('./groups.json')
           sortHats()
           formQuarterfinals()
           console.log(quarterFinalsTeams)
+          playQuarterfinals()
+          console.log(quarterFinalsWinners)
     })
     .catch(error => {
         console.error('Došlo je do greške:', error);
@@ -85,7 +87,8 @@ function createTeamGroups(group, groupKey) {
 
     for (let i = 0;i<group.length;i++) {
         let team = {
-            "Name": group[i].Team,
+            "Team": group[i].Team,
+            "FIBARanking": group[i].FIBARanking,
             "Wins": 0,
             "Loses": 0,
             "Points": 0,
@@ -112,12 +115,17 @@ function startMatch(group, groupKey) {
     for (let i = 0;i<group.length;i++) {
         for (let j = 0; j<group.length;j++){
             if (i==j || i>j) continue; //osiguramo se da timovi ne igraju vec odigrane meceve i sami protiv sebe
-            calculateWinProbability(group[i].FIBARanking, group[j].FIBARanking, i, j, groupKey, group[i].Team, group[j].Team)
+            // calculateWinProbability(group[i].FIBARanking, group[j].FIBARanking, i, j, groupKey, group[i].Team, group[j].Team)
+            calculateWinProbability(group[i], group[j], i, j, groupKey)
         }
     }
 }
 
-function calculateWinProbability(team1FIBA, team2FIBA, team1Index, team2Index, groupKey, name1,name2) {
+function calculateWinProbability(team1, team2, team1Index, team2Index, groupKey) {
+    const team1FIBA = team1.FIBARanking
+    const team2FIBA = team2.FIBARanking
+    const name1 = team1.Team
+    const name2 = team2.Team
 
     const maxDifference = 10; // maks razlika koju koristimo za normalizaciju
     const rangDifference = team1FIBA - team2FIBA;
@@ -130,34 +138,89 @@ function calculateWinProbability(team1FIBA, team2FIBA, team1Index, team2Index, g
 
     // odredjujemo pobednika na osnovu toga ko je dao vise koseva i azuriramo podatke
     if (matchResult.team1Score > matchResult.team2Score) {
-        updateTeamStats(groupKey, team1Index, team2Index, name1, name2, matchResult)
-        //ovo drzimo van updateTeamStats da bi smo izbegli bugove
-        teamGroups[groupKey][team1Index].scoreDifference += matchResult.scoreDifference;
-        teamGroups[groupKey][team2Index].scoreDifference -= matchResult.scoreDifference;
-        console.log(`       POBEDNIK: ${name1}`)
+        if (groupKey){
+            updateTeamStats(team1, team2, matchResult, team1Index, team2Index, groupKey)
+            //ovo drzimo van updateTeamStats da bi smo izbegli bugove
+            teamGroups[groupKey][team1Index].scoreDifference += matchResult.scoreDifference;
+            teamGroups[groupKey][team2Index].scoreDifference -= matchResult.scoreDifference;
+            console.log(`       POBEDNIK: ${name1}`)
+        } else {
+            updateTeamStats(team1, team2, matchResult)
+            console.log(`       POBEDNIK: ${name1}`)
+            console.log('-----------------------------------------');
+            return team1
+        }
     } else {
-        updateTeamStats(groupKey, team2Index, team1Index, name2, name1, matchResult)
-        teamGroups[groupKey][team2Index].scoreDifference += matchResult.scoreDifference;
-        teamGroups[groupKey][team1Index].scoreDifference -= matchResult.scoreDifference;
-        console.log(`       POBEDNIK: ${name2}`)
+        if (groupKey){
+            updateTeamStats(team2, team1, matchResult, team2Index, team1Index, groupKey)
+            teamGroups[groupKey][team2Index].scoreDifference += matchResult.scoreDifference;
+            teamGroups[groupKey][team1Index].scoreDifference -= matchResult.scoreDifference;
+            console.log(`       POBEDNIK: ${name2}`)
+        } else {
+            updateTeamStats(team2, team1, matchResult)
+            console.log(`       POBEDNIK: ${name2}`)
+            console.log('-----------------------------------------');
+            return team2
+        }
     }
     console.log('-----------------------------------------');
 }
+// function calculateWinProbability(team1FIBA, team2FIBA, team1Index, team2Index, groupKey, name1,name2) {
 
-function updateTeamStats(groupKey, index1, index2, name1, name2, matchResult){
-    teamGroups[groupKey][index1].Wins += 1
-    teamGroups[groupKey][index1].Points += 2
-    teamGroups[groupKey][index1].Matches[`Against_${name2}`] = "Win"
-    teamGroups[groupKey][index1].Matches[`ScoreDiff_For_${name2}`] = matchResult.team1Score - matchResult.team2Score
-    teamGroups[groupKey][index2].Loses += 1
-    teamGroups[groupKey][index2].Points += 1
-    teamGroups[groupKey][index2].Matches[`Against_${name1}`] = "Loss"
-    teamGroups[groupKey][index2].Matches[`ScoreDiff_For_${name1}`] = matchResult.team2Score - matchResult.team1Score
-    // azuriranje broja postignutih koseva i razlike u kosevima 
-    teamGroups[groupKey][index1].GoalsScored += matchResult.team1Score;
-    teamGroups[groupKey][index2].GoalsScored += matchResult.team2Score;
-    teamGroups[groupKey][index1].OpponentPoints += matchResult.team2Score;
-    teamGroups[groupKey][index2].OpponentPoints += matchResult.team1Score;
+//     const maxDifference = 10; // maks razlika koju koristimo za normalizaciju
+//     const rangDifference = team1FIBA - team2FIBA;
+//     // definisemo verovatnocu za tim1
+//     let probabilityTeam1 = 0.5 + (rangDifference / maxDifference) * 0.25;
+//     probabilityTeam1 = Math.max(0, Math.min(1, probabilityTeam1)); // normalizacija izmednu 0 i 1
+    
+//     // simulacija broja koseva, vracamo objekat
+//     const matchResult = simulateMatch(probabilityTeam1, name1, name2);
+
+//     // odredjujemo pobednika na osnovu toga ko je dao vise koseva i azuriramo podatke
+//     if (matchResult.team1Score > matchResult.team2Score) {
+//         updateTeamStats(groupKey, team1Index, team2Index, name1, name2, matchResult)
+//         //ovo drzimo van updateTeamStats da bi smo izbegli bugove
+//         teamGroups[groupKey][team1Index].scoreDifference += matchResult.scoreDifference;
+//         teamGroups[groupKey][team2Index].scoreDifference -= matchResult.scoreDifference;
+//         console.log(`       POBEDNIK: ${name1}`)
+//     } else {
+//         updateTeamStats(groupKey, team2Index, team1Index, name2, name1, matchResult)
+//         teamGroups[groupKey][team2Index].scoreDifference += matchResult.scoreDifference;
+//         teamGroups[groupKey][team1Index].scoreDifference -= matchResult.scoreDifference;
+//         console.log(`       POBEDNIK: ${name2}`)
+//     }
+//     console.log('-----------------------------------------');
+// }
+
+function updateTeamStats(team1, team2, matchResult, index1, index2, groupKey){
+    const name1 = team1.Team
+    const name2 = team2.Team
+    if (groupKey) {
+        teamGroups[groupKey][index1].Wins += 1
+        teamGroups[groupKey][index1].Points += 2
+        teamGroups[groupKey][index1].Matches[`Against_${name2}`] = "Win"
+        teamGroups[groupKey][index1].Matches[`ScoreDiff_For_${name2}`] = matchResult.team1Score - matchResult.team2Score
+        teamGroups[groupKey][index2].Loses += 1
+        teamGroups[groupKey][index2].Points += 1
+        teamGroups[groupKey][index2].Matches[`Against_${name1}`] = "Loss"
+        teamGroups[groupKey][index2].Matches[`ScoreDiff_For_${name1}`] = matchResult.team2Score - matchResult.team1Score
+        // azuriranje broja postignutih koseva i razlike u kosevima 
+        teamGroups[groupKey][index1].GoalsScored += matchResult.team1Score;
+        teamGroups[groupKey][index2].GoalsScored += matchResult.team2Score;
+        teamGroups[groupKey][index1].OpponentPoints += matchResult.team2Score;
+        teamGroups[groupKey][index2].OpponentPoints += matchResult.team1Score;
+    } else {
+        team1["QuarterfinalsResult"] = `Won_vs_${name2}`
+        team1.Wins += 1
+        team1.Matches[`Against_${name2}`] = "Win"
+        team1.GoalsScored += matchResult.team1Score
+        team1.OpponentPoints += matchResult.team2Score
+        team2["QuarterfinalsResult"] = `Lost_vs_${name1}`
+        team2.Loses += 1
+        team2.Matches[`Against_${name1}`] = "Loss"
+        team2.GoalsScored += matchResult.team2Score
+        team2.OpponentPoints += matchResult.team1Score
+    }
 }
 
 
@@ -203,9 +266,9 @@ function groupRanking(group) {
             return team2.Points - team1.Points; // sortiraj po bodovima
         } else {
             // ako su bodovi jednaki, proveri medjusobni susret
-            if (team1.Matches[team2.Name] === "Win") {
+            if (team1.Matches[team2.Team] === "Win") {
                 return -1; // team 1 je pobedio Team 2
-            } else if (team2.Matches[team1.Name] === "Win") {
+            } else if (team2.Matches[team1.Team] === "Win") {
                 return 1; // Team 2 je pobedio Team 1
             } else {
                 // ako je medjusobni susret neresen, kriterijum je kos razlika
@@ -215,7 +278,7 @@ function groupRanking(group) {
     });
 
     let gubitnik = groupCopy.pop()
-    // console.log(`Ispada: ${gubitnik.Name} sa ${gubitnik.Points} poena`)
+    // console.log(`Ispada: ${gubitnik.Team} sa ${gubitnik.Points} poena`)
     groupRanks.push(groupCopy); 
 }
 
@@ -276,7 +339,7 @@ let hats = []
     }
     hats = sortedHats
 
- }
+ } 
 
  let quarterFinalsTeams = []
 
@@ -321,16 +384,20 @@ function getQuarterfinalsGroup(hat1, hat2) {
 
  function haveAlreadyPlayed(team1, team2) {
      let team1History = Object.keys(team1.Matches)
-     return team1History.includes(`Against_${team2.Name}`)
+     return team1History.includes(`Against_${team2.Team}`)
  }
 
+ let quarterFinalsWinners = [];
+
  function playQuarterfinals() {
-    
+     for (let i=0;i<quarterFinalsTeams.length;i++){
+         let winner = calculateWinProbability(quarterFinalsTeams[i]["Team1"], quarterFinalsTeams[i]["Team2"])
+         quarterFinalsWinners.push(winner)
+     }
  }
 
  function formSemifinals(){
-    //grupa iz E sesira igra sa D sesirom
-    //F igra sa G
-    //ako npr. nema preostalih timova iz G sesira, onda igraju s kim god da je ostao
-
+     //grupa iz E sesira igra sa D sesirom
+     //F igra sa G
+     //ako npr. nema preostalih timova iz G sesira, onda igraju s kim god da je ostao
  }
