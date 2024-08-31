@@ -1,4 +1,46 @@
-//Grupna faza se sastoji od toga da svaki tim igra sa preostala tri tima iz svoje grupe.
+// const fs = require('fs');
+
+// // ucitaj JSON
+// function loadJSONFile(filePath) {
+//     return new Promise((resolve, reject) => {
+//         fs.readFile(filePath, 'utf8', (err, data) => {
+//             if (err) {
+//                 reject(new Error('Greška prilikom učitavanja JSON datoteke'));
+//             } else {
+//                 resolve(JSON.parse(data));
+//             }
+//         });
+//     });
+// }
+
+// // procesuiraj podatke
+// loadJSONFile('./groups.json')
+//     .then(data => {
+//         Object.keys(data).forEach(function(key) {
+//             createTeamGroups(data[key], key);
+//         });
+//         return data;
+//     })
+//     .then(data => {
+//         console.log('Grupna faza - I kolo:');
+//         Object.keys(data).forEach(function(key) {
+//             startMatch(data[key], key);
+//         });
+//         return data;
+//     })
+//     .then(() => {
+//         Object.keys(teamGroups).forEach(function(key) {
+//             groupRanking(teamGroups[key], key);
+//         });
+//         sortHats();
+//         console.log(hats);
+//         formQuarterfinals();
+//         console.log(eliminationPhaseTeams);
+//     })
+//     .catch(error => {
+//         console.error('Došlo je do greške:', error);
+//     });
+
 
 fetch('./groups.json')
     .then(response => {
@@ -19,7 +61,6 @@ fetch('./groups.json')
             startMatch(data[key], key)
           
           });
-        //   console.log(teamGroups);
           return data;
     })
     .then(() => {
