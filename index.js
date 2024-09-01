@@ -61,6 +61,7 @@ fetch('./groups.json')
             startMatch(data[key], key)
           
           });
+          printGroupResults()
           return data;
     })
     .then(() => {
@@ -69,10 +70,10 @@ fetch('./groups.json')
           
           });   
           sortHats()
+          printHats()
           formQuarterfinals()
-          console.log(quarterFinalsTeams)
+          printQuarterfinals()
           playQuarterfinals()
-          console.log(quarterFinalsWinners)
           formSemifinals()
           playSemifinals()
           playFinals()
@@ -112,6 +113,18 @@ let teamGroups = {}
 
 //-------------------------------------------------------------------
 
+function printGroupResults(){
+    console.log('Konacan plasman po grupama:')
+    Object.keys(teamGroups).forEach(group=>{
+        console.log(`   Grupa ${group} (Ime - pobede/porazi/bodovi/dati kosevi/primljeni kosevi/kos razlika):`)
+        let i = 1;
+        teamGroups[group].forEach(team=>{
+            console.log(`       ${i}. ${team.Team} - ${team.Wins}/${team.Loses}/${team.Points}/${team.GoalsScored}/${team.OpponentPoints}/${team.scoreDifference}`)
+            i++
+        })
+    })
+}
+
 function startMatch(group, groupKey) {
     console.log(`   Grupa:${groupKey}`)
     // svaki tim igra sa svakim
@@ -146,11 +159,9 @@ function calculateWinProbability(team1, team2, team1Index, team2Index, groupKey)
             //ovo drzimo van updateTeamStats da bi smo izbegli bugove
             teamGroups[groupKey][team1Index].scoreDifference += matchResult.scoreDifference;
             teamGroups[groupKey][team2Index].scoreDifference -= matchResult.scoreDifference;
-            console.log(`       POBEDNIK: ${name1}`)
         } else {
             updateTeamStats(team1, team2, matchResult)
-            console.log(`       POBEDNIK: ${name1}`)
-            console.log('-----------------------------------------');
+            console.log(' ')
             return {"Winner": team1, "Loser": team2}
         }
     } else {
@@ -158,15 +169,13 @@ function calculateWinProbability(team1, team2, team1Index, team2Index, groupKey)
             updateTeamStats(team2, team1, matchResult, team2Index, team1Index, groupKey)
             teamGroups[groupKey][team2Index].scoreDifference += matchResult.scoreDifference;
             teamGroups[groupKey][team1Index].scoreDifference -= matchResult.scoreDifference;
-            console.log(`       POBEDNIK: ${name2}`)
         } else {
             updateTeamStats(team2, team1, matchResult)
-            console.log(`       POBEDNIK: ${name2}`)
-            console.log('-----------------------------------------');
+            console.log(' ')
             return {"Winner": team2, "Loser": team1}
         }
     }
-    console.log('-----------------------------------------');
+    console.log(' ')
 }
 
 function updateTeamStats(team1, team2, matchResult, index1, index2, groupKey){
@@ -318,6 +327,16 @@ let hats = []
 
  } 
 
+ function printHats(){
+    console.log('Sesiri:')
+    Object.keys(hats).forEach(hat=>{
+        console.log(`   Sesir ${hat}:`)
+        hats[hat].forEach(team=>{
+            console.log(`       ${team.Team}`)
+        })
+    })
+ }
+
  let quarterFinalsTeams = []
 
  function formQuarterfinals(){
@@ -364,9 +383,18 @@ function getQuarterfinalsGroup(hat1, hat2) {
      return team1History.includes(`Against_${team2.Team}`)
  }
 
+ function printQuarterfinals(){
+    console.log('Parovi cetvrtfinala:')
+    Object.keys(quarterFinalsTeams).forEach(pair=>{
+        console.log(`   ${quarterFinalsTeams[pair].Team1.Team} - ${quarterFinalsTeams[pair].Team2.Team}`)
+    })
+    console.log(' ')
+ }
+
  let quarterFinalsWinners = []
 
  function playQuarterfinals() {
+    console.log('Cetvrtfinale:')
      for (let i=0;i<quarterFinalsTeams.length;i++){
          let matchRes = calculateWinProbability(quarterFinalsTeams[i]["Team1"], quarterFinalsTeams[i]["Team2"])
          let winner = matchRes.Winner
@@ -428,14 +456,13 @@ function getQuarterfinalsGroup(hat1, hat2) {
     if (quarterTeamsCopy.length === 1) {
         console.log(`Ostao je jedan tim bez protivnika: ${quarterTeamsCopy[0].name}`);
     }
-
-    console.log(semiFinalsTeams);
 }
 
 let finalsPair = []
 let bronzeMedalPair = []
 
 function playSemifinals() {
+    console.log('Polufinale:')
     for (let i=0;i<semiFinalsTeams.length;i++){
         let matchRes = calculateWinProbability(semiFinalsTeams[i]["Team1"], semiFinalsTeams[i]["Team2"])
         let winner = matchRes.Winner
@@ -450,19 +477,22 @@ function playSemifinals() {
 let medals = []
 
 function playFinals(){
-    let matchRes = calculateWinProbability(finalsPair[0], finalsPair[1])
+    console.log(' ')
+    console.log('Mec za 3. mesto:')
+    let matchRes = calculateWinProbability(bronzeMedalPair[0], bronzeMedalPair[1])
     let winner = matchRes.Winner
-    let loser = matchRes.Loser
-    medals.push(winner, loser)
-    matchRes = calculateWinProbability(bronzeMedalPair[0], bronzeMedalPair[1])
-    winner = matchRes.Winner
     medals.push(winner)
+    console.log('Finale:')
+    matchRes = calculateWinProbability(finalsPair[0], finalsPair[1])
+    winner = matchRes.Winner
+    let loser = matchRes.Loser
+    medals.push(loser, winner)
     printMedalWinners()
 }
 
 function printMedalWinners() {
     console.log('Medalje:')
-    console.log(`   Zlato:${medals[0].Team}`)
+    console.log(`   Zlato:${medals[2].Team}`)
     console.log(`   Srebro:${medals[1].Team}`)
-    console.log(`   Bronza:${medals[2].Team}`)
+    console.log(`   Bronza:${medals[0].Team}`)
 }
