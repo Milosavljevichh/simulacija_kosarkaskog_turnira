@@ -73,6 +73,7 @@ fetch('./groups.json')
           console.log(quarterFinalsTeams)
           playQuarterfinals()
           console.log(quarterFinalsWinners)
+          formSemifinals()
     })
     .catch(error => {
         console.error('Došlo je do greške:', error);
@@ -165,32 +166,6 @@ function calculateWinProbability(team1, team2, team1Index, team2Index, groupKey)
     }
     console.log('-----------------------------------------');
 }
-// function calculateWinProbability(team1FIBA, team2FIBA, team1Index, team2Index, groupKey, name1,name2) {
-
-//     const maxDifference = 10; // maks razlika koju koristimo za normalizaciju
-//     const rangDifference = team1FIBA - team2FIBA;
-//     // definisemo verovatnocu za tim1
-//     let probabilityTeam1 = 0.5 + (rangDifference / maxDifference) * 0.25;
-//     probabilityTeam1 = Math.max(0, Math.min(1, probabilityTeam1)); // normalizacija izmednu 0 i 1
-    
-//     // simulacija broja koseva, vracamo objekat
-//     const matchResult = simulateMatch(probabilityTeam1, name1, name2);
-
-//     // odredjujemo pobednika na osnovu toga ko je dao vise koseva i azuriramo podatke
-//     if (matchResult.team1Score > matchResult.team2Score) {
-//         updateTeamStats(groupKey, team1Index, team2Index, name1, name2, matchResult)
-//         //ovo drzimo van updateTeamStats da bi smo izbegli bugove
-//         teamGroups[groupKey][team1Index].scoreDifference += matchResult.scoreDifference;
-//         teamGroups[groupKey][team2Index].scoreDifference -= matchResult.scoreDifference;
-//         console.log(`       POBEDNIK: ${name1}`)
-//     } else {
-//         updateTeamStats(groupKey, team2Index, team1Index, name2, name1, matchResult)
-//         teamGroups[groupKey][team2Index].scoreDifference += matchResult.scoreDifference;
-//         teamGroups[groupKey][team1Index].scoreDifference -= matchResult.scoreDifference;
-//         console.log(`       POBEDNIK: ${name2}`)
-//     }
-//     console.log('-----------------------------------------');
-// }
 
 function updateTeamStats(team1, team2, matchResult, index1, index2, groupKey){
     const name1 = team1.Team
@@ -387,7 +362,7 @@ function getQuarterfinalsGroup(hat1, hat2) {
      return team1History.includes(`Against_${team2.Team}`)
  }
 
- let quarterFinalsWinners = [];
+ let quarterFinalsWinners = []
 
  function playQuarterfinals() {
      for (let i=0;i<quarterFinalsTeams.length;i++){
@@ -396,8 +371,60 @@ function getQuarterfinalsGroup(hat1, hat2) {
      }
  }
 
- function formSemifinals(){
-     //grupa iz E sesira igra sa D sesirom
-     //F igra sa G
-     //ako npr. nema preostalih timova iz G sesira, onda igraju s kim god da je ostao
- }
+ let semiFinalsTeams = []
+
+ function formSemifinals() {
+    let quarterTeamsCopy = [...quarterFinalsWinners];
+    let semiFinalsTeams = [];
+
+    // Prvo pravimo parove prema pravilima (D-E, F-G)
+    for (let j = 0; j < quarterFinalsWinners.length; j++) {
+        const team1 = quarterFinalsWinners[j];
+
+        for (let i = 0; i < quarterTeamsCopy.length; i++) {
+            const team2 = quarterTeamsCopy[i];
+            if ((team1.In_hat === "D" && team2.In_hat === "E") || (team1.In_hat === "E" && team2.In_hat === "D")) {
+                let group = {
+                    "Team1": team1,
+                    "Team2": team2
+                };
+                semiFinalsTeams.push(group);
+                quarterTeamsCopy.splice(i, 1); // Uklanja team2
+                quarterTeamsCopy.splice(quarterTeamsCopy.indexOf(team1), 1); // Uklanja team1
+                break;
+            } else if ((team1.In_hat === "G" && team2.In_hat === "F") || (team1.In_hat === "F" && team2.In_hat === "G")) {
+                let group = {
+                    "Team1": team1,
+                    "Team2": team2
+                };
+                semiFinalsTeams.push(group);
+                quarterTeamsCopy.splice(i, 1); // Uklanja team2
+                quarterTeamsCopy.splice(quarterTeamsCopy.indexOf(team1), 1); // Uklanja team1
+                break;
+            }
+        }
+    }
+
+    // Ako ostanu timovi, nasumično ih uparujemo
+    while (quarterTeamsCopy.length > 1) {
+        let index1 = Math.floor(Math.random() * quarterTeamsCopy.length);
+        let team1 = quarterTeamsCopy.splice(index1, 1)[0]; // Ukloni team1
+
+        let index2 = Math.floor(Math.random() * quarterTeamsCopy.length);
+        let team2 = quarterTeamsCopy.splice(index2, 1)[0]; // Ukloni team2
+
+        let group = {
+            "Team1": team1,
+            "Team2": team2
+        };
+        semiFinalsTeams.push(group);
+    }
+
+    // Ako ostane jedan tim bez para
+    if (quarterTeamsCopy.length === 1) {
+        console.log(`Ostao je jedan tim bez protivnika: ${quarterTeamsCopy[0].name}`);
+    }
+
+    console.log(semiFinalsTeams);
+    return semiFinalsTeams;
+}
