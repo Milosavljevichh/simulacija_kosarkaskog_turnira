@@ -74,6 +74,8 @@ fetch('./groups.json')
           playQuarterfinals()
           console.log(quarterFinalsWinners)
           formSemifinals()
+          playSemifinals()
+          playFinals()
     })
     .catch(error => {
         console.error('Došlo je do greške:', error);
@@ -149,7 +151,7 @@ function calculateWinProbability(team1, team2, team1Index, team2Index, groupKey)
             updateTeamStats(team1, team2, matchResult)
             console.log(`       POBEDNIK: ${name1}`)
             console.log('-----------------------------------------');
-            return team1
+            return {"Winner": team1, "Loser": team2}
         }
     } else {
         if (groupKey){
@@ -161,7 +163,7 @@ function calculateWinProbability(team1, team2, team1Index, team2Index, groupKey)
             updateTeamStats(team2, team1, matchResult)
             console.log(`       POBEDNIK: ${name2}`)
             console.log('-----------------------------------------');
-            return team2
+            return {"Winner": team2, "Loser": team1}
         }
     }
     console.log('-----------------------------------------');
@@ -366,7 +368,8 @@ function getQuarterfinalsGroup(hat1, hat2) {
 
  function playQuarterfinals() {
      for (let i=0;i<quarterFinalsTeams.length;i++){
-         let winner = calculateWinProbability(quarterFinalsTeams[i]["Team1"], quarterFinalsTeams[i]["Team2"])
+         let matchRes = calculateWinProbability(quarterFinalsTeams[i]["Team1"], quarterFinalsTeams[i]["Team2"])
+         let winner = matchRes.Winner
          quarterFinalsWinners.push(winner)
      }
  }
@@ -375,13 +378,12 @@ function getQuarterfinalsGroup(hat1, hat2) {
 
  function formSemifinals() {
     let quarterTeamsCopy = [...quarterFinalsWinners];
-    let semiFinalsTeams = [];
 
-    // Prvo pravimo parove prema pravilima (D-E, F-G)
+    // prvo pravimo parove prema pravilima (D-E, F-G)
     for (let j = 0; j < quarterFinalsWinners.length; j++) {
-        const team1 = quarterFinalsWinners[j];
+        const team1 = quarterTeamsCopy[j];
 
-        for (let i = 0; i < quarterTeamsCopy.length; i++) {
+        for (let i = j+1; i < quarterTeamsCopy.length; i++) {
             const team2 = quarterTeamsCopy[i];
             if ((team1.In_hat === "D" && team2.In_hat === "E") || (team1.In_hat === "E" && team2.In_hat === "D")) {
                 let group = {
@@ -389,8 +391,9 @@ function getQuarterfinalsGroup(hat1, hat2) {
                     "Team2": team2
                 };
                 semiFinalsTeams.push(group);
-                quarterTeamsCopy.splice(i, 1); // Uklanja team2
-                quarterTeamsCopy.splice(quarterTeamsCopy.indexOf(team1), 1); // Uklanja team1
+                quarterTeamsCopy.splice(i, 1); // uklanja team2
+                quarterTeamsCopy.splice(j, 1); // uklanja team1
+                j--
                 break;
             } else if ((team1.In_hat === "G" && team2.In_hat === "F") || (team1.In_hat === "F" && team2.In_hat === "G")) {
                 let group = {
@@ -398,20 +401,21 @@ function getQuarterfinalsGroup(hat1, hat2) {
                     "Team2": team2
                 };
                 semiFinalsTeams.push(group);
-                quarterTeamsCopy.splice(i, 1); // Uklanja team2
-                quarterTeamsCopy.splice(quarterTeamsCopy.indexOf(team1), 1); // Uklanja team1
+                quarterTeamsCopy.splice(i, 1); 
+                quarterTeamsCopy.splice(j, 1); 
+                j--
                 break;
             }
         }
     }
 
-    // Ako ostanu timovi, nasumično ih uparujemo
+    // ako ostanu timovi, nasumicno ih uparujemo
     while (quarterTeamsCopy.length > 1) {
         let index1 = Math.floor(Math.random() * quarterTeamsCopy.length);
-        let team1 = quarterTeamsCopy.splice(index1, 1)[0]; // Ukloni team1
+        let team1 = quarterTeamsCopy.splice(index1, 1)[0]; 
 
         let index2 = Math.floor(Math.random() * quarterTeamsCopy.length);
-        let team2 = quarterTeamsCopy.splice(index2, 1)[0]; // Ukloni team2
+        let team2 = quarterTeamsCopy.splice(index2, 1)[0]; 
 
         let group = {
             "Team1": team1,
@@ -420,11 +424,45 @@ function getQuarterfinalsGroup(hat1, hat2) {
         semiFinalsTeams.push(group);
     }
 
-    // Ako ostane jedan tim bez para
+    // ako ostane jedan tim bez para, sto bi bio bug
     if (quarterTeamsCopy.length === 1) {
         console.log(`Ostao je jedan tim bez protivnika: ${quarterTeamsCopy[0].name}`);
     }
 
     console.log(semiFinalsTeams);
-    return semiFinalsTeams;
+}
+
+let finalsPair = []
+let bronzeMedalPair = []
+
+function playSemifinals() {
+    for (let i=0;i<semiFinalsTeams.length;i++){
+        let matchRes = calculateWinProbability(semiFinalsTeams[i]["Team1"], semiFinalsTeams[i]["Team2"])
+        let winner = matchRes.Winner
+        let loser = matchRes.Loser
+        finalsPair.push(winner)
+        bronzeMedalPair.push(loser)
+    }
+    console.log(`Utakmica za trece mesto: ${bronzeMedalPair[0].Team} - ${bronzeMedalPair[1].Team}`)
+    console.log(`Finale: ${finalsPair[0].Team} - ${finalsPair[1].Team}`)
+}
+
+let medals = []
+
+function playFinals(){
+    let matchRes = calculateWinProbability(finalsPair[0], finalsPair[1])
+    let winner = matchRes.Winner
+    let loser = matchRes.Loser
+    medals.push(winner, loser)
+    matchRes = calculateWinProbability(bronzeMedalPair[0], bronzeMedalPair[1])
+    winner = matchRes.Winner
+    medals.push(winner)
+    printMedalWinners()
+}
+
+function printMedalWinners() {
+    console.log('Medalje:')
+    console.log(`   Zlato:${medals[0].Team}`)
+    console.log(`   Srebro:${medals[1].Team}`)
+    console.log(`   Bronza:${medals[2].Team}`)
 }
