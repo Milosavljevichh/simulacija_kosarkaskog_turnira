@@ -31,9 +31,9 @@ loadJSONFile('./groups.json')
         });
         let hats = sortHats(groupRanks)
         printHats(hats)
-        formQuarterfinals(hats)
-        printQuarterfinals()
-        playQuarterfinals()
+        let quarterFinalsTeams = formQuarterfinals(hats)
+        printQuarterfinals(quarterFinalsTeams)
+        playQuarterfinals(quarterFinalsTeams)
         formSemifinals()
         playSemifinals()
         playFinals()
@@ -314,9 +314,9 @@ function sortHats(groupRanks){
     })
  }
 
- let quarterFinalsTeams = []
 
  function formQuarterfinals(hats){
+    let quarterFinalsTeams = []
     //nasumicno ukrstanje
     //timovi iz D se ukrstaju s G
     //E se ukrsta s F
@@ -324,11 +324,12 @@ function sortHats(groupRanks){
     for (let i=0;i<4;i++){
         //biramo random prvi ili drugi team
         if (i < 2) {
-            getQuarterfinalsGroup("D", "G", hats)
+            quarterFinalsTeams.push(getQuarterfinalsGroup("D", "G", hats))
         } else {
-            getQuarterfinalsGroup("E", "F", hats)
+            quarterFinalsTeams.push(getQuarterfinalsGroup("E", "F", hats))
         }
     }
+    return quarterFinalsTeams
 }
 
 function getQuarterfinalsGroup(hat1, hat2, hats) {
@@ -352,7 +353,7 @@ function getQuarterfinalsGroup(hat1, hat2, hats) {
      hats[hat1].splice(index1, 1)
      hats[hat2].splice(index2, 1)
 
-     quarterFinalsTeams.push(formedGroup)
+     return formedGroup
  }
 
  function haveAlreadyPlayed(team1, team2) {
@@ -360,7 +361,7 @@ function getQuarterfinalsGroup(hat1, hat2, hats) {
      return team1History.includes(`Against_${team2.Team}`)
  }
 
- function printQuarterfinals(){
+ function printQuarterfinals(quarterFinalsTeams){
     console.log('Parovi cetvrtfinala:')
     Object.keys(quarterFinalsTeams).forEach(pair=>{
         console.log(`   ${quarterFinalsTeams[pair].Team1.Team} - ${quarterFinalsTeams[pair].Team2.Team}`)
@@ -370,7 +371,7 @@ function getQuarterfinalsGroup(hat1, hat2, hats) {
 
  let quarterFinalsWinners = []
 
- function playQuarterfinals() {
+ function playQuarterfinals(quarterFinalsTeams) {
     console.log('Cetvrtfinale:')
      for (let i=0;i<quarterFinalsTeams.length;i++){
          let matchRes = calculateWinProbability(quarterFinalsTeams[i]["Team1"], quarterFinalsTeams[i]["Team2"])
