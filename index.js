@@ -34,9 +34,9 @@ loadJSONFile('./groups.json')
         Object.keys(teamGroups).forEach(function(key) {
             groupRanks.push(groupRanking(teamGroups[key], key))
         });
-        sortHats(groupRanks)
-        printHats()
-        formQuarterfinals()
+        let hats = sortHats(groupRanks)
+        printHats(hats)
+        formQuarterfinals(hats)
         printQuarterfinals()
         playQuarterfinals()
         formSemifinals()
@@ -249,8 +249,8 @@ function groupRanking(group) {
     return groupCopy
 }
 
-let hats = []
- function sortHats(groupRanks){
+function sortHats(groupRanks){
+     let hats = []
     //primarno po broju bodova
     //postiguti kosevi (ako isti bodovi)
     //kos razlika (ako su 2 kriterfijuma iznad ista)
@@ -305,10 +305,11 @@ let hats = []
             else {num++}
     }
     hats = sortedHats
+    return hats
 
  } 
 
- function printHats(){
+ function printHats(hats){
     console.log('Sesiri:')
     Object.keys(hats).forEach(hat=>{
         console.log(`   Sesir ${hat}:`)
@@ -320,7 +321,7 @@ let hats = []
 
  let quarterFinalsTeams = []
 
- function formQuarterfinals(){
+ function formQuarterfinals(hats){
     //nasumicno ukrstanje
     //timovi iz D se ukrstaju s G
     //E se ukrsta s F
@@ -328,14 +329,14 @@ let hats = []
     for (let i=0;i<4;i++){
         //biramo random prvi ili drugi team
         if (i < 2) {
-            getQuarterfinalsGroup("D", "G")
+            getQuarterfinalsGroup("D", "G", hats)
         } else {
-            getQuarterfinalsGroup("E", "F")
+            getQuarterfinalsGroup("E", "F", hats)
         }
     }
 }
 
-function getQuarterfinalsGroup(hat1, hat2) {
+function getQuarterfinalsGroup(hat1, hat2, hats) {
      let alreadyPlayed, index1, index2, formedGroup
 
      //nasumicno biramo 2 tima, ako su igrali jedan protiv drugog, biramo ih opet, ako nisu onda ih uklanjamo iz sesira
