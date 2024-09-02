@@ -30,10 +30,11 @@ loadJSONFile('./groups.json')
         return data;
     })
     .then(() => {
+        let groupRanks = []
         Object.keys(teamGroups).forEach(function(key) {
-            groupRanking(teamGroups[key], key);
+            groupRanks.push(groupRanking(teamGroups[key], key))
         });
-        sortHats()
+        sortHats(groupRanks)
         printHats()
         formQuarterfinals()
         printQuarterfinals()
@@ -222,9 +223,9 @@ function simulateMatch(probabilityTeam1, name1, name2) {
 
 //-------------------------------------------------------------------
 
-let groupRanks = []
 
 function groupRanking(group) {
+    let groupRanks = []
     let groupCopy = group.slice(); // kreiraj kopiju grupe da ne bi menjao originalni niz
 
     groupCopy.sort((team1, team2) => {
@@ -245,11 +246,11 @@ function groupRanking(group) {
 
     let gubitnik = groupCopy.pop()
     // console.log(`Ispada: ${gubitnik.Team} sa ${gubitnik.Points} poena`)
-    groupRanks.push(groupCopy); 
+    return groupCopy
 }
 
 let hats = []
- function sortHats(){
+ function sortHats(groupRanks){
     //primarno po broju bodova
     //postiguti kosevi (ako isti bodovi)
     //kos razlika (ako su 2 kriterfijuma iznad ista)
