@@ -16,20 +16,15 @@ function loadJSONFile(filePath) {
 // procesuiraj podatke
 loadJSONFile('./groups.json')
     .then(data => {
+        let teamGroups = {}
         Object.keys(data).forEach(function(key) {
-            createTeamGroups(data[key], key);
+            teamGroups[key] = createTeamGroups(data[key], key);
         });
-        return data;
-    })
-    .then(data => {
         console.log('Grupna faza - I kolo:');
         Object.keys(data).forEach(function(key) {
-            startMatch(data[key], key);
+            startMatch(data[key], key, teamGroups);
         });
-        printGroupResults()
-        return data;
-    })
-    .then(() => {
+        printGroupResults(teamGroups)
         let groupRanks = []
         Object.keys(teamGroups).forEach(function(key) {
             groupRanks.push(groupRanking(teamGroups[key], key))
@@ -42,6 +37,7 @@ loadJSONFile('./groups.json')
         formSemifinals()
         playSemifinals()
         playFinals()
+        return data;
     })
     .catch(error => {
         console.error('Došlo je do greške:', error);
@@ -67,16 +63,15 @@ function createTeamGroups(group, groupKey) {
         groupObj[groupKey].push(team)
     }
 
-    teamGroups[groupKey] = groupObj[groupKey];
+    return groupObj[groupKey];
 
 }
 
-let teamGroups = {}
 
 
 //-------------------------------------------------------------------
 
-function printGroupResults(){
+function printGroupResults(teamGroups){
     console.log('Konacan plasman po grupama:')
     Object.keys(teamGroups).forEach(group=>{
         console.log(`   Grupa ${group} (Ime - pobede/porazi/bodovi/dati kosevi/primljeni kosevi/kos razlika):`)
@@ -106,19 +101,19 @@ function printGroupResults(){
     })
 }
 
-function startMatch(group, groupKey) {
+function startMatch(group, groupKey, teamGroups) {
     console.log(`   Grupa:${groupKey}`)
     // svaki tim igra sa svakim
     for (let i = 0;i<group.length;i++) {
         for (let j = 0; j<group.length;j++){
             if (i==j || i>j) continue; //osiguramo se da timovi ne igraju vec odigrane meceve i sami protiv sebe
             // calculateWinProbability(group[i].FIBARanking, group[j].FIBARanking, i, j, groupKey, group[i].Team, group[j].Team)
-            calculateWinProbability(group[i], group[j], i, j, groupKey)
+            calculateWinProbability(group[i], group[j], i, j, groupKey, teamGroups)
         }
     }
 }
 
-function calculateWinProbability(team1, team2, team1Index, team2Index, groupKey) {
+function calculateWinProbability(team1, team2, team1Index, team2Index, groupKey, teamGroups) {
     const team1FIBA = team1.FIBARanking
     const team2FIBA = team2.FIBARanking
     const name1 = team1.Team
@@ -136,7 +131,7 @@ function calculateWinProbability(team1, team2, team1Index, team2Index, groupKey)
     // odredjujemo pobednika na osnovu toga ko je dao vise koseva i azuriramo podatke
     if (matchResult.team1Score > matchResult.team2Score) {
         if (groupKey){
-            updateTeamStats(team1, team2, matchResult, team1Index, team2Index, groupKey)
+            updateTeamStats(team1, team2, matchResult, team1Index, team2Index, groupKey, teamGroups)
             //ovo drzimo van updateTeamStats da bi smo izbegli bugove
             teamGroups[groupKey][team1Index].scoreDifference += matchResult.scoreDifference;
             teamGroups[groupKey][team2Index].scoreDifference -= matchResult.scoreDifference;
@@ -147,7 +142,7 @@ function calculateWinProbability(team1, team2, team1Index, team2Index, groupKey)
         }
     } else {
         if (groupKey){
-            updateTeamStats(team2, team1, matchResult, team2Index, team1Index, groupKey)
+            updateTeamStats(team2, team1, matchResult, team2Index, team1Index, groupKey, teamGroups)
             teamGroups[groupKey][team2Index].scoreDifference += matchResult.scoreDifference;
             teamGroups[groupKey][team1Index].scoreDifference -= matchResult.scoreDifference;
         } else {
@@ -159,7 +154,7 @@ function calculateWinProbability(team1, team2, team1Index, team2Index, groupKey)
     console.log(' ')
 }
 
-function updateTeamStats(team1, team2, matchResult, index1, index2, groupKey){
+function updateTeamStats(team1, team2, matchResult, index1, index2, groupKey, teamGroups){
     const name1 = team1.Team
     const name2 = team2.Team
     if (groupKey) {
