@@ -1,88 +1,50 @@
-// const fs = require('fs');
+const fs = require('fs');
 
-// // ucitaj JSON
-// function loadJSONFile(filePath) {
-//     return new Promise((resolve, reject) => {
-//         fs.readFile(filePath, 'utf8', (err, data) => {
-//             if (err) {
-//                 reject(new Error('Greška prilikom učitavanja JSON datoteke'));
-//             } else {
-//                 resolve(JSON.parse(data));
-//             }
-//         });
-//     });
-// }
+// ucitaj JSON
+function loadJSONFile(filePath) {
+    return new Promise((resolve, reject) => {
+        fs.readFile(filePath, 'utf8', (err, data) => {
+            if (err) {
+                reject(new Error('Greška prilikom učitavanja JSON datoteke'));
+            } else {
+                resolve(JSON.parse(data));
+            }
+        });
+    });
+}
 
-// // procesuiraj podatke
-// loadJSONFile('./groups.json')
-//     .then(data => {
-//         Object.keys(data).forEach(function(key) {
-//             createTeamGroups(data[key], key);
-//         });
-//         return data;
-//     })
-//     .then(data => {
-//         console.log('Grupna faza - I kolo:');
-//         Object.keys(data).forEach(function(key) {
-//             startMatch(data[key], key);
-//         });
-//         return data;
-//     })
-//     .then(() => {
-//         Object.keys(teamGroups).forEach(function(key) {
-//             groupRanking(teamGroups[key], key);
-//         });
-//         sortHats();
-//         console.log(hats);
-//         formQuarterfinals();
-//         console.log(quarterFinalsTeams);
-//     })
-//     .catch(error => {
-//         console.error('Došlo je do greške:', error);
-//     });
-
-
-fetch('./groups.json')
-    .then(response => {
-        if (!response.ok) {
-            throw new Error('Mrežna greška prilikom učitavanja JSON datoteke');
-        }
-        return response.json();
-    })
+// procesuiraj podatke
+loadJSONFile('./groups.json')
     .then(data => {
         Object.keys(data).forEach(function(key) {
-            createTeamGroups(data[key], key)
-          });
-        return data
+            createTeamGroups(data[key], key);
+        });
+        return data;
     })
     .then(data => {
-        console.log('Grupna faza - I kolo:')
+        console.log('Grupna faza - I kolo:');
         Object.keys(data).forEach(function(key) {
-            startMatch(data[key], key)
-          
-          });
-          printGroupResults()
-          return data;
+            startMatch(data[key], key);
+        });
+        printGroupResults()
+        return data;
     })
     .then(() => {
         Object.keys(teamGroups).forEach(function(key) {
-            groupRanking(teamGroups[key], key)
-          
-          });   
-          sortHats()
-          printHats()
-          formQuarterfinals()
-          printQuarterfinals()
-          playQuarterfinals()
-          formSemifinals()
-          playSemifinals()
-          playFinals()
+            groupRanking(teamGroups[key], key);
+        });
+        sortHats()
+        printHats()
+        formQuarterfinals()
+        printQuarterfinals()
+        playQuarterfinals()
+        formSemifinals()
+        playSemifinals()
+        playFinals()
     })
     .catch(error => {
         console.error('Došlo je do greške:', error);
     });
-
-//-------------------------------------------------------------------
 
 function createTeamGroups(group, groupKey) {
     let groupObj = {
@@ -118,8 +80,26 @@ function printGroupResults(){
     Object.keys(teamGroups).forEach(group=>{
         console.log(`   Grupa ${group} (Ime - pobede/porazi/bodovi/dati kosevi/primljeni kosevi/kos razlika):`)
         let i = 1;
+        teamGroups[group].sort((team1, team2)=>{
+            if (team2.Points !== team1.Points) {
+                return team2.Points - team1.Points; // sortiraj po bodovima
+            } else {
+                // Ako su bodovi isti, proveri medjusobne rezultate
+                const result1 = team1.Matches[`Against_${team2.Team}`];
+                const result2 = team2.Matches[`Against_${team1.Team}`];
+    
+                if (result1 === "Win" && result2 !== "Win") {
+                    return -1; // team1 je pobedio team2
+                } else if (result2 === "Win" && result1 !== "Win") {
+                    return 1; // team2 je pobedio team1
+                } else {
+                    // ako su oba rezultata "Loss" ili oba su "Win", ili nema rezultata, sortira po bodovima razlika
+                    return team2.scoreDifference - team1.scoreDifference;
+                }
+            }
+        })
         teamGroups[group].forEach(team=>{
-            console.log(`       ${i}. ${team.Team} - ${team.Wins}/${team.Loses}/${team.Points}/${team.GoalsScored}/${team.OpponentPoints}/${team.scoreDifference}`)
+            console.log(`       ${i}. ${team.Team} - ${team.Wins} / ${team.Loses} / ${team.Points} / ${team.GoalsScored} / ${team.OpponentPoints} / ${team.scoreDifference}`)
             i++
         })
     })
